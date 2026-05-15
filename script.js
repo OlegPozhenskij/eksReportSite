@@ -2,6 +2,8 @@
 const SERVER_URL = 'http://10.100.162.110:5000';
 let currentPreviewDoc = null;
 
+//сырая версия
+
 // DOM элементы
 const phoneInput = document.getElementById('phoneInput');
 const contactNameInput = document.getElementById('contactNameInput');
