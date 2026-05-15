@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PhoneRecord Uploader</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: #f2f2f7;
+            margin: 0;
+            padding: 20px;
+            color: #000;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 8px 0;
+        }
+        .sub {
+            color: #6c6c70;
+            margin-bottom: 20px;
+        }
+        input, button {
+            font-size: 16px;
+            border-radius: 12px;
+            padding: 14px;
+        }
+        input {
+            width: 100%;
+            border: 1px solid #e5e5ea;
+            background: #f9f9fb;
+            margin-bottom: 16px;
+        }
+        button {
+            background: #007aff;
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:active {
+            background: #005fc1;
+            transform: scale(0.98);
+        }
+        .file-preview {
+            background: #e9ecef;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 12px;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
+        hr {
+            margin: 20px 0;
+            border: none;
+            border-top: 1px solid #e5e5ea;
+        }
+        .reports-list {
+            margin-top: 15px;
+        }
+        .report-item {
+            background: #f9f9fb;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            word-break: break-all;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .report-name {
+            font-size: 14px;
+            flex: 1;
+        }
+        .download-btn {
+            background: #34c759;
+            padding: 8px 12px;
+            width: auto;
+            font-size: 12px;
+        }
+        .phone-hint {
+            font-size: 13px;
+            color: #6c6c70;
+            margin-top: -12px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>📱 PhoneRecord Sender</h1>
+        <div class="sub">Выберите аудиофайл и отправьте на сервер</div>
+
+        <input type="text" id="phoneInput" placeholder="Номер телефона (например: 79271234567)" value="79270000000">
+        <div class="phone-hint">* Укажите номер, к которому относится запись</div>
+
+        <input type="file" id="fileInput" accept="audio/*,video/mp4,.aac,.mp3,.m4a,.amr,.3gp">
+        <div id="filePreview" class="file-preview" style="display: none;"></div>
+
+        <button id="uploadBtn">📤 Отправить на сервер</button>
+        <div id="statusMessage" class="status"></div>
+    </div>
+
+    <div class="card">
+        <h2>📄 Готовые отчёты</h2>
+        <button id="refreshReportsBtn" style="background:#636366; margin-bottom:12px;">🔄 Обновить список</button>
+        <div id="reportsList" class="reports-list">Загрузка...</div>
+    </div>
+</div>
+
+<script>
+    const SERVER_URL = 'http://192.168.137.1:5000';  // Поменяйте на IP вашего сервера
+
+    const phoneInput = document.getElementById('phoneInput');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const statusDiv = document.getElementById('statusMessage');
+    const refreshBtn = document.getElementById('refreshReportsBtn');
+    const reportsContainer = document.getElementById('reportsList');
+
+    let selectedFile = null;
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            selectedFile = e.target.files[0];
+            filePreview.style.display = 'block';
+            filePreview.innerHTML = `🎵 ${selectedFile.name} (${(selectedFile.size / 1024).toFixed(1)} KB)`;
+        } else {
+            selectedFile = null;
+            filePreview.style.display = 'none';
+        }
+    });
+
+    function showStatus(text, type) {
+        statusDiv.textContent = text;
+        statusDiv.className = `status ${type}`;
+        setTimeout(() => {
+            if (statusDiv.className === `status ${type}`) {
+                statusDiv.style.display = 'none';
+                statusDiv.className = 'status';
+            } else {
+                statusDiv.className = 'status';
+            }
+        }, 4000);
+        statusDiv.style.display = 'block';
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+        const phone = phoneInput.value.trim();
+        if (!phone) {
+            showStatus('❌ Введите номер телефона', 'error');
+            return;
+        }
+        if (!selectedFile) {
+            showStatus('❌ Выберите файл', 'error');
+            return;
+        }
+
+        showStatus('⏳ Отправка...', 'loading');
+
+        const formData = new FormData();
+        formData.append('phone', phone);
+        formData.append('file', selectedFile);
+
+        try {
+            const response = await fetch(`${SERVER_URL}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (response.ok && result.status === 'ok') {
+                showStatus(`✅ ${result.file} отправлен! Обработка начата.`, 'success');
+                fileInput.value = '';
+                selectedFile = null;
+                filePreview.style.display = 'none';
+                loadReports();
+            } else {
+                showStatus(`❌ Ошибка: ${result.error || 'Неизвестная ошибка'}`, 'error');
+            }
+        } catch (err) {
+            showStatus(`❌ Ошибка соединения: ${err.message}`, 'error');
+        }
+    });
+
+    async function loadReports() {
+        reportsContainer.innerHTML = 'Загрузка...';
+        try {
+            const response = await fetch(`${SERVER_URL}/api/reports`);
+            const data = await response.json();
+            const reports = data.reports || [];
+
+            if (reports.length === 0) {
+                reportsContainer.innerHTML = '📭 Нет отчётов. Загрузите аудиофайлы.';
+                return;
+            }
+
+            reportsContainer.innerHTML = '';
+            for (const report of reports) {
+                const reportDiv = document.createElement('div');
+                reportDiv.className = 'report-item';
+                reportDiv.innerHTML = `
+                    <div class="report-name">
+                        <strong>${report.filename}</strong><br>
+                        <small>📅 ${report.date} • ${(report.size / 1024).toFixed(1)} KB</small>
+                    </div>
+                    <a href="${SERVER_URL}/download/${report.filename}" download="${report.filename}" class="download-btn" style="background:#34c759; padding:8px 12px; border-radius:8px; color:white; text-decoration:none; font-size:12px;">⬇️ Скачать</a>
+                `;
+                reportsContainer.appendChild(reportDiv);
+            }
+        } catch (err) {
+            reportsContainer.innerHTML = `❌ Ошибка: ${err.message}`;
+        }
+    }
+
+    loadReports();
+    refreshBtn.addEventListener('click', loadReports);
+</script>
+</body>
+</html>
