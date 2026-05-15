@@ -4,9 +4,432 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>PhoneRecord - Отправка аудио и отчёты</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Подключаем Font Awesome для иконок -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+            padding: 24px;
+        }
+
+        /* Левая панель */
+        .left-panel, .right-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .panel-header i {
+            font-size: 28px;
+            color: #667eea;
+        }
+
+        .panel-header h2 {
+            font-size: 24px;
+            color: #333;
+            flex: 1;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #667eea;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-icon:hover {
+            background: #f0f0f0;
+            transform: rotate(180deg);
+        }
+
+        /* Форма */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group label i {
+            color: #667eea;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .hint {
+            display: block;
+            font-size: 12px;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        /* Красивое облачко для файлов */
+        .file-drop-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-drop-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .file-drop-area:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+        }
+
+        .file-drop-area.drag-over {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
+            transform: scale(0.98);
+        }
+
+        .cloud-icon {
+            font-size: 64px;
+            color: #667eea;
+            margin-bottom: 16px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .file-drop-area.shake {
+            animation: shake 0.5s ease;
+        }
+
+        .drop-text {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .browse-link {
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .browse-link:hover {
+            color: #764ba2;
+        }
+
+        .file-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .file-preview {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 12px;
+            color: #2e7d32;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .file-preview i {
+            font-size: 20px;
+        }
+
+        /* Кнопки */
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .status-message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-message.success {
+            display: block;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-message.error {
+            display: block;
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-message.loading {
+            display: block;
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        /* Отчёты */
+        .reports-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .folder {
+            margin-bottom: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .folder-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .folder-header:hover {
+            background: #f0f0f0;
+        }
+
+        .folder-icon {
+            margin-right: 12px;
+            transition: transform 0.3s;
+            color: #667eea;
+        }
+
+        .folder-info {
+            flex: 1;
+        }
+
+        .folder-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .folder-stats {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .folder-actions {
+            margin-left: 12px;
+        }
+
+        .download-all-btn {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .folder-content {
+            display: none;
+            padding: 16px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .folder-content.show {
+            display: block;
+        }
+
+        .report-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .report-item:hover {
+            background: #f0f0f0;
+        }
+
+        .report-info {
+            flex: 1;
+        }
+
+        .report-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .report-meta {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .preview-btn, .download-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .preview-btn {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .download-btn {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .preview-btn:hover, .download-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .loading, .empty-folder {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            .file-drop-area {
+                padding: 30px 15px;
+            }
+
+            .cloud-icon {
+                font-size: 48px;
+            }
+
+            .drop-text {
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="app-container">
@@ -21,15 +444,15 @@
             <label for="phoneInput">
                 <i class="fas fa-phone"></i> Номер телефона
             </label>
-            <input type="tel" id="phoneInput" placeholder="+7 (XXX) XXX-XX-XX" value="79270000000">
-            <small class="hint">Введите номер в любом формате (автоматически очистится)</small>
+            <input type="tel" id="phoneInput" placeholder="+7 (XXX) XXX-XX-XX" value="89967300562">
+            <small class="hint">Введите номер телефона (автоматически очистится до цифр)</small>
         </div>
 
         <div class="form-group">
             <label for="contactNameInput">
-                <i class="fas fa-user"></i> Имя контакта (опционально)
+                <i class="fas fa-user"></i> Имя контакта (обязательно для папки)
             </label>
-            <input type="text" id="contactNameInput" placeholder="Например: Иван Петров">
+            <input type="text" id="contactNameInput" placeholder="Например: Иван Петров" value="Олег Поженский">
             <small class="hint">Будет отображаться в названии папки с отчётами</small>
         </div>
 
@@ -38,8 +461,11 @@
                 <i class="fas fa-file-audio"></i> Аудиофайл
             </label>
             <div class="file-drop-area" id="fileDropArea">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Нажмите для выбора или перетащите файл</p>
+                <div class="cloud-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <p class="drop-text">Перетащите аудиофайл сюда или <span class="browse-link">выберите файл</span></p>
+                <p class="file-hint">Поддерживаются: MP3, AAC, M4A, WAV, AMR, 3GP</p>
                 <input type="file" id="fileInput" accept="audio/*,video/mp4,.aac,.mp3,.m4a,.amr,.3gp" style="display: none;">
                 <div id="filePreview" class="file-preview"></div>
             </div>
@@ -68,23 +494,297 @@
     </div>
 </div>
 
-<!-- Модальное окно для предпросмотра DOCX -->
-<div id="previewModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-file-alt"></i> Предпросмотр документа</h3>
-            <button class="modal-close" onclick="closePreview()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <iframe id="previewIframe" src="about:blank"></iframe>
-        </div>
-        <div class="modal-footer">
-            <button id="downloadFromModalBtn" class="btn-secondary">📥 Скачать DOCX</button>
-            <button onclick="closePreview()" class="btn-outline">Закрыть</button>
-        </div>
-    </div>
-</div>
+<script>
+    // Конфигурация - ИЗМЕНИТЕ IP НА ВАШ СЕРВЕР
+    const SERVER_URL = 'http://10.100.162.110:5000';
 
-<script src="script.js"></script>
+    // DOM элементы
+    const phoneInput = document.getElementById('phoneInput');
+    const contactNameInput = document.getElementById('contactNameInput');
+    const fileInput = document.getElementById('fileInput');
+    const fileDropArea = document.getElementById('fileDropArea');
+    const filePreview = document.getElementById('filePreview');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const statusDiv = document.getElementById('statusMessage');
+    const refreshBtn = document.getElementById('refreshReportsBtn');
+    const reportsContainer = document.getElementById('reportsContainer');
+
+    let selectedFile = null;
+
+    // Очистка номера - оставляем только цифры
+    function cleanPhoneNumber(phone) {
+        let cleaned = phone.replace(/\D/g, '');
+        if (cleaned.length === 11 && cleaned.startsWith('8')) {
+            cleaned = '8' + cleaned.substring(1);
+        }
+        if (cleaned.length === 10) {
+            cleaned = '8' + cleaned;
+        }
+        console.log('Очистка номера:', phone, '->', cleaned);
+        return cleaned;
+    }
+
+    // Обновление превью файла
+    function updateFilePreview(file) {
+        if (file) {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            const sizeKB = (file.size / 1024).toFixed(1);
+            const sizeDisplay = file.size > 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+
+            filePreview.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <span>${file.name}</span>
+                <span style="font-size: 12px; opacity: 0.8;">(${sizeDisplay})</span>
+            `;
+            filePreview.style.display = 'flex';
+        } else {
+            filePreview.style.display = 'none';
+            filePreview.innerHTML = '';
+        }
+    }
+
+    // Работа с облачком
+    fileDropArea.addEventListener('click', (e) => {
+        if (e.target.closest('.browse-link') || e.target === fileDropArea || e.target.closest('.cloud-icon')) {
+            fileInput.click();
+        }
+    });
+
+    fileDropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileDropArea.classList.add('drag-over');
+    });
+
+    fileDropArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        fileDropArea.classList.remove('drag-over');
+    });
+
+    fileDropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileDropArea.classList.remove('drag-over');
+
+        if (e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (file.type.startsWith('audio/') || /\.(aac|mp3|m4a|amr|3gp|wav)$/i.test(file.name)) {
+                selectedFile = file;
+                updateFilePreview(file);
+            } else {
+                showStatus('❌ Пожалуйста, выберите аудиофайл', 'error');
+                fileDropArea.classList.add('shake');
+                setTimeout(() => fileDropArea.classList.remove('shake'), 500);
+            }
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            selectedFile = e.target.files[0];
+            updateFilePreview(selectedFile);
+        }
+    });
+
+    // Отправка файла
+    uploadBtn.addEventListener('click', async () => {
+        const rawPhone = phoneInput.value.trim();
+        const contactName = contactNameInput.value.trim();
+
+        console.log('===== ОТПРАВКА =====');
+        console.log('Телефон (сырой):', rawPhone);
+        console.log('Имя контакта:', contactName);
+        console.log('Файл:', selectedFile?.name);
+
+        const cleanPhone = cleanPhoneNumber(rawPhone);
+
+        if (!cleanPhone || cleanPhone.length < 10) {
+            showStatus('❌ Введите корректный номер телефона', 'error');
+            return;
+        }
+
+        if (!contactName) {
+            showStatus('❌ Введите имя контакта (это нужно для создания папки)', 'error');
+            return;
+        }
+
+        if (!selectedFile) {
+            showStatus('❌ Выберите аудиофайл', 'error');
+            fileDropArea.classList.add('shake');
+            setTimeout(() => fileDropArea.classList.remove('shake'), 500);
+            return;
+        }
+
+        showStatus('⏳ Отправка файла...', 'loading');
+
+        const formData = new FormData();
+        formData.append('phone', cleanPhone);
+        formData.append('contact_name', contactName);
+        formData.append('file', selectedFile);
+
+        try {
+            const response = await fetch(`${SERVER_URL}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            console.log('Ответ сервера:', result);
+
+            if (response.ok && result.status === 'ok') {
+                showStatus(`✅ Файл отправлен! Телефон: ${cleanPhone}, Контакт: ${contactName}`, 'success');
+                selectedFile = null;
+                fileInput.value = '';
+                updateFilePreview(null);
+                setTimeout(() => loadReports(), 2000);
+            } else {
+                showStatus(`❌ Ошибка: ${result.error || 'Неизвестная ошибка'}`, 'error');
+            }
+        } catch (err) {
+            console.error('Ошибка:', err);
+            showStatus(`❌ Ошибка: ${err.message}. Проверьте сервер`, 'error');
+        }
+    });
+
+    function showStatus(text, type) {
+        statusDiv.textContent = text;
+        statusDiv.className = `status-message ${type}`;
+        statusDiv.style.display = 'block';
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+    }
+
+    // Загрузка отчётов
+    async function loadReports() {
+        console.log('Загрузка отчётов...');
+        reportsContainer.innerHTML = '<div class="loading">⏳ Загрузка отчётов...</div>';
+
+        try {
+            const response = await fetch(`${SERVER_URL}/api/reports`);
+            const data = await response.json();
+            const reports = data.reports || [];
+
+            console.log('Получено отчётов:', reports.length);
+
+            if (reports.length === 0) {
+                reportsContainer.innerHTML = '<div class="empty-folder">📭 Нет отчётов. Загрузите аудиофайл.</div>';
+                return;
+            }
+
+            // Группировка по display_name
+            const grouped = {};
+            reports.forEach(report => {
+                let groupName = report.display_name || 'Без папки';
+                if (!grouped[groupName]) {
+                    grouped[groupName] = [];
+                }
+                grouped[groupName].push(report);
+            });
+
+            renderGroups(grouped);
+
+        } catch (err) {
+            console.error('Ошибка:', err);
+            reportsContainer.innerHTML = `<div class="empty-folder">❌ Ошибка: ${err.message}</div>`;
+        }
+    }
+
+    function renderGroups(grouped) {
+        reportsContainer.innerHTML = '';
+
+        for (const [groupName, reports] of Object.entries(grouped)) {
+            const totalSize = reports.reduce((sum, r) => sum + (r.size || 0), 0);
+            const sizeMB = (totalSize / 1024 / 1024).toFixed(1);
+
+            const folderDiv = document.createElement('div');
+            folderDiv.className = 'folder';
+            folderDiv.innerHTML = `
+                <div class="folder-header">
+                    <i class="fas fa-chevron-right folder-icon"></i>
+                    <div class="folder-info">
+                        <div class="folder-name">📁 ${escapeHtml(groupName)}</div>
+                        <div class="folder-stats">${reports.length} отчёт(ов) • ${sizeMB} MB</div>
+                    </div>
+                    <div class="folder-actions">
+                        <button class="download-all-btn" data-files='${JSON.stringify(reports.map(r => r.filename))}'>
+                            <i class="fas fa-download"></i> Все
+                        </button>
+                    </div>
+                </div>
+                <div class="folder-content">
+                    ${reports.map(report => `
+                        <div class="report-item">
+                            <div class="report-info">
+                                <div class="report-name">📄 ${escapeHtml(report.filename)}</div>
+                                <div class="report-meta">📅 ${report.date} • ${formatSize(report.size)}</div>
+                            </div>
+                            <div class="report-actions">
+                                <button class="preview-btn" onclick="previewReport('${escapeHtml(report.filename)}')">👁️ Предпросмотр</button>
+                                <button class="download-btn" onclick="downloadReport('${escapeHtml(report.filename)}')">📥 Скачать</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            reportsContainer.appendChild(folderDiv);
+
+            const header = folderDiv.querySelector('.folder-header');
+            const content = folderDiv.querySelector('.folder-content');
+            const icon = header.querySelector('.folder-icon');
+
+            header.addEventListener('click', (e) => {
+                if (e.target.closest('.download-all-btn')) return;
+                content.classList.toggle('show');
+                icon.style.transform = content.classList.contains('show') ? 'rotate(90deg)' : 'rotate(0deg)';
+            });
+
+            const downloadAllBtn = header.querySelector('.download-all-btn');
+            downloadAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const files = JSON.parse(downloadAllBtn.dataset.files);
+                downloadAllReports(files);
+            });
+        }
+    }
+
+    function formatSize(bytes) {
+        if (!bytes) return '0 KB';
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function downloadReport(filename) {
+        window.open(`${SERVER_URL}/download/${encodeURIComponent(filename)}`, '_blank');
+    }
+
+    async function downloadAllReports(filenames) {
+        for (const filename of filenames) {
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    downloadReport(filename);
+                    resolve();
+                }, 500);
+            });
+        }
+    }
+
+    async function previewReport(filename) {
+        const url = `${SERVER_URL}/preview/${encodeURIComponent(filename)}`;
+        const win = window.open();
+        win.document.write(`<iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>`);
+    }
+
+    // Инициализация
+    refreshBtn.addEventListener('click', loadReports);
+    loadReports();
+    setInterval(loadReports, 30000);
+</script>
 </body>
 </html>
