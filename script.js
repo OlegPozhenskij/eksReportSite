@@ -1,5 +1,5 @@
 // Конфигурация
-const SERVER_URL = 'http://192.168.137.1:5000';
+const SERVER_URL = 'http://10.100.162.110:5000';
 let currentPreviewDoc = null;
 
 // DOM элементы
